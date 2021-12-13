@@ -8,8 +8,7 @@ function statement(invoice, plays) {
 		minimumFractionDigits: 2,
 	}).format
 
-	for (let perf of invoice.performances) {
-		const play = plays[perf.playID]
+	function amountFor(perf, play) {
 		let thisAmount = 0
 
 		switch (play.type) {
@@ -30,6 +29,13 @@ function statement(invoice, plays) {
 				throw new Error(`알 수 없는 장르: ${play.type}`)
 		}
 
+		return thisAmount
+	}
+
+	for (let perf of invoice.performances) {
+		const play = plays[perf.playID]
+		let thisAmount = amountFor(perf, play)
+
 		/** 포인트를 적립한다. */
 		volumneCredits += Math.max(perf.audience - 30, 0)
 		/** 희극 관객 5명마다 추가포인트를 제공한다. */
@@ -38,9 +44,8 @@ function statement(invoice, plays) {
 		/** 청구 내역을 출력한다. */
 		result += `${play.name}: ${format(this.Amount / 100)} (${perf.audience}석)`
 		totalAmount += thisAmount
-
-		result += `총액: ${format(totalAmount / 100)}\n`
-		result += `적립 포인트: ${volumneCredits}점\n`
-		return result
 	}
+	result += `총액: ${format(totalAmount / 100)}\n`
+	result += `적립 포인트: ${volumneCredits}점\n`
+	return result
 }
