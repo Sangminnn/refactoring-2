@@ -1,51 +1,59 @@
 function statement(invoice, plays) {
 	let totalAmount = 0
-	let volumneCredits = 0
+	let volumeCredits = 0
 	let result = `청구 내역 (고객명: ${invoice.customer})\n`
+
 	const format = new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'USD',
 		minimumFractionDigits: 2,
 	}).format
 
-	function amountFor(perf, play) {
-		let thisAmount = 0
+	function playFor(aPerformance) {
+		return plays[aPerformance.playId]
+	}
 
-		switch (play.type) {
+	function amountFor(aPerformance) {
+		let result = 0
+
+		switch (playFor(aPerformance).type) {
 			case 'tragedy':
-				thisAmount = 40000
-				if (perf.audience > 30) {
-					thisAmount += 1000 * (perf.audience - 30)
+				result = 40000
+				if (aPerformance.audience > 30) {
+					result += 1000 * (aPerformance.audience - 30)
 				}
 				break
 			case 'comedy':
-				thisAmount = 30000
-				if (perf.audience > 20) {
-					thisAmount += 10000 + 500 * (perf.audience - 20)
+				result = 30000
+				if (aPerformance.audience > 20) {
+					result += 10000 + 500 * (aPerformance.audience - 20)
 				}
-				thisAmount += 300 * perf.audience
+				result += 300 * aPerformance.audience
 				break
 			default:
-				throw new Error(`알 수 없는 장르: ${play.type}`)
+				throw new Error(`알 수 없는 장르: ${playFor(aPerformance).type}`)
 		}
 
-		return thisAmount
+		return result
+	}
+
+	function volumeCreditsFor(perf) {
+		let volumeCredits = 0
+
+		volumeCredits += Math.max(perf.audience - 30, 0)
+		if (playFor(perf).type === 'comedy') volumeCredits += Math.floor(perf.audience / 5)
+
+		return volumeCredits
 	}
 
 	for (let perf of invoice.performances) {
-		const play = plays[perf.playID]
-		let thisAmount = amountFor(perf, play)
-
-		/** 포인트를 적립한다. */
-		volumneCredits += Math.max(perf.audience - 30, 0)
-		/** 희극 관객 5명마다 추가포인트를 제공한다. */
-		if ('comedy' === play.type) volumneCredits += Math.floor(perf.audience / 5)
+		volumeCredits += volumeCreditsFor(perf)
 
 		/** 청구 내역을 출력한다. */
-		result += `${play.name}: ${format(this.Amount / 100)} (${perf.audience}석)`
-		totalAmount += thisAmount
+		result += `${playFor(perf).name}: ${format(this.Amount / 100)} (${perf.audience}석)`
+		totalAmount += amountFor(perf)
 	}
 	result += `총액: ${format(totalAmount / 100)}\n`
-	result += `적립 포인트: ${volumneCredits}점\n`
+	result += `적립 포인트: ${volumeCredits}점\n`
 	return result
 }
