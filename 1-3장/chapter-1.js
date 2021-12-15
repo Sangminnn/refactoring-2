@@ -1,43 +1,7 @@
+import createStatementData from './createStatementData'
+
 function statement(data, plays) {
-	const statementData = {}
-	statementData.customer = data.customer
-	statementData.performances = invoice.performances.map(enrichPerformance)
-	return renderPlainText(statementData, plays)
-
-	function enrichPerformance(aPerformance) {
-		const result = Object.assign({}, aPerformance)
-		result.play = playFor(result)
-		result.amount = amountFor(result)
-		return result
-	}
-
-	function playFor(aPerformance) {
-		return plays[aPerformance.playId]
-	}
-
-	function amountFor(aPerformance) {
-		let result = 0
-
-		switch (aPerformance.play.type) {
-			case 'tragedy':
-				result = 40000
-				if (aPerformance.audience > 30) {
-					result += 1000 * (aPerformance.audience - 30)
-				}
-				break
-			case 'comedy':
-				result = 30000
-				if (aPerformance.audience > 20) {
-					result += 10000 + 500 * (aPerformance.audience - 20)
-				}
-				result += 300 * aPerformance.audience
-				break
-			default:
-				throw new Error(`알 수 없는 장르: ${aPerformance.play.type}`)
-		}
-
-		return result
-	}
+	return renderPlainText(createStatementData(invoice, plays))
 }
 
 function renderPlainText(data, plays) {
@@ -52,14 +16,6 @@ function renderPlainText(data, plays) {
 
 	return result
 
-	function totalAmount() {
-		let result = 0
-		for (let perf of data.performances) {
-			result += perf.amount
-		}
-		return result
-	}
-
 	function totalVolumeCredits() {
 		let result = 0
 		for (let perf of data.performances) {
@@ -67,21 +23,30 @@ function renderPlainText(data, plays) {
 		}
 		return result
 	}
+}
 
-	function usd(aNumber) {
-		return new Intl.NumberFormat('en-US', {
-			style: 'currency',
-			currency: 'USD',
-			minimumFractionDigits: 2,
-		}).format(aNumber / 100)
+function htmlStatement(invoice, plays) {
+	return renderHtml(createStatementData(invoice, plays)(invoice, plays))
+}
+function renderHtml(data) {
+	let result = `<h1>청구 내역 (고객명: ${data.customer})</h1>\n`
+	result += '<table>\n'
+	result += '<tr><th>연극</th><th>좌석 수</th><th>금액</th></tr>'
+	for (let perf of data.performances) {
+		result += `<tr><td>${perf.play.name}</td><td>(${perf.audience})</td>`
+		result += `<td>${usd(perf.amount)}</td></tr>\n`
 	}
 
-	function volumeCreditsFor(perf) {
-		let volumeCredits = 0
+	result += '</table>\n'
+	result += `<p>총액: <em>${usd(data.totalAmount)}</em></p>\n`
+	result += `<p>적립 포인트: <em>${data.totalVolumeCredits}</em>점</p>\n`
+	return result
+}
 
-		volumeCredits += Math.max(perf.audience - 30, 0)
-		if (perf.play.type === 'comedy') volumeCredits += Math.floor(perf.audience / 5)
-
-		return volumeCredits
-	}
+function usd(aNumber) {
+	return new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: 'USD',
+		minimumFractionDigits: 2,
+	}).format(aNumber / 100)
 }
