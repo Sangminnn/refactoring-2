@@ -61,3 +61,10 @@ class OrderAfter {
 		return Math.min(order.quantity * order.itemPrice * 0.1, 100)
 	}
 }
+
+/**
+ * 오늘의 Point
+ *
+ * 1. 함수를 추출하게 되어 간단하게 만드는 경우에, return부분이 계산로직보다 상단에 위치하는것이 좋을지
+ * 하단에 위치하는것이 좋을지 고민임.
+ */
